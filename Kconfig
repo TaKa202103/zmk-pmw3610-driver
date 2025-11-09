@@ -159,6 +159,10 @@ config PMW3610_AUTOMOUSE_TIMEOUT_MS
   int "Amount of milliseconds the mouse layer will be active after using the trackball"
   default 400
 
+config PMW3610_ADJUSTABLE_MOUSESPEED
+  bool "Enable Adjustable mouse speed"
+  default n
+
 config PMW3610_MOVEMENT_THRESHOLD
     int "Movement threshold for automatic mouse layer activation"
     default 5
@@ -166,6 +170,22 @@ config PMW3610_MOVEMENT_THRESHOLD
         The threshold for trackball movement that triggers the automatic mouse layer.
         A higher value means more movement is required to activate the mouse layer.
         This helps prevent accidental activation during typing.
+
+config PMW3610_MOUSE_SPEED_MIN
+    string "movement speed minimum for adjustable mouse speed"
+    default "0.5"
+
+config PMW3610_MOUSE_SPEED_MAX
+    string "movement speed maximum for adjustable mouse speed"
+    default "3.0"
+
+config PMW3610_SCROLL_SPEED_MIN
+    string "movement speed minimum for adjustable scroll speed"
+    default "0.5"
+
+config PMW3610_SCROLL_SPEED_MAX
+    string "movement speed maximum for adjustable scroll speed"
+    default "1.0"
 
 config PMW3610_BALL_ACTION_TICK
     int "PMW3610's required ticks to trigger a ball action"

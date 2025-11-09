@@ -28,6 +28,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(pmw3610, CONFIG_INPUT_LOG_LEVEL);
 
+#include <math.h>
 
 //////// Sensor initialization steps definition //////////
 // init is done in non-blocking manner (i.e., async), a //
@@ -68,6 +69,9 @@ static int (*const async_init_fn[ASYNC_INIT_STEP_COUNT])(const struct device *de
     [ASYNC_INIT_STEP_CHECK_OB1] = pmw3610_async_init_check_ob1,
     [ASYNC_INIT_STEP_CONFIGURE] = pmw3610_async_init_configure,
 };
+
+int16_t x;
+int16_t y;
 
 //////// Function definitions //////////
 
@@ -661,6 +665,25 @@ static int pmw3610_report_data(const struct device *dev) {
         TOINT16((buf[PMW3610_X_L_POS] + ((buf[PMW3610_XY_H_POS] & 0xF0) << 4)), 12) / dividor;
     int16_t raw_y =
         TOINT16((buf[PMW3610_Y_L_POS] + ((buf[PMW3610_XY_H_POS] & 0x0F) << 8)), 12) / dividor;
+
+#ifdef CONFIG_PMW3610_ADJUSTABLE_MOUSESPEED
+    char *endptr_min, *endptr_max;
+    float mouse_speed_min, mouse_speed_max;
+    if (input_mode == SCROLL) {
+        mouse_speed_min = strtod(CONFIG_PMW3610_SCROLL_SPEED_MIN, &endptr_min);
+        mouse_speed_max = strtod(CONFIG_PMW3610_SCROLL_SPEED_MAX, &endptr_max);
+    } else {
+        mouse_speed_min = strtod(CONFIG_PMW3610_MOUSE_SPEED_MIN, &endptr_min);
+        mouse_speed_max = strtod(CONFIG_PMW3610_MOUSE_SPEED_MAX, &endptr_max);
+    }
+
+    float movement_magnitude = sqrt(raw_x * raw_x + raw_y * raw_y);
+    float dynamic_multiplier = 1.0 + movement_magnitude / 10.0;
+    dynamic_multiplier = fmin(fmax(dynamic_multiplier, mouse_speed_min), mouse_speed_max);
+
+    raw_x = raw_x * dynamic_multiplier;
+    raw_y = raw_y * dynamic_multiplier;
+#endif
 
     if (IS_ENABLED(CONFIG_PMW3610_ORIENTATION_0)) {
         x = -raw_x;
